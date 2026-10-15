@@ -8,6 +8,7 @@ from flask import Flask, render_template, request, session
 from flask_wtf.csrf import CSRFError
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
+from werkzeug.exceptions import SecurityError
 
 from .constants import CATEGORIES, SEVERITIES, STATUSES
 from .extensions import csrf, db, login_manager
@@ -47,7 +48,9 @@ def create_app(test_config=None):
         SESSION_COOKIE_SECURE=os.environ.get('COOKIE_SECURE') == '1',
         PERMANENT_SESSION_LIFETIME=timedelta(minutes=60),
         WTF_CSRF_TIME_LIMIT=7200,
-        TRUSTED_HOSTS=os.environ.get('TRUSTED_HOSTS', 'localhost,127.0.0.1,[::1]').split(','),
+        TRUSTED_HOSTS=[host.strip() for host in
+                       (os.environ.get('TRUSTED_HOSTS') or 'localhost,127.0.0.1,[::1]').split(',')
+                       if host.strip()],
         SCAN_MAX_PAGES=5,
         SCAN_MAX_SECONDS=120,
         SCAN_DELAY_SECONDS=1,
@@ -116,6 +119,12 @@ def create_app(test_config=None):
     @app.errorhandler(CSRFError)
     def csrf_error(error):
         return render_template('error.html', code=400, message='Your form expired or its security token was missing. Reload the page and try again.'), 400
+
+    @app.errorhandler(SecurityError)
+    def untrusted_host(error):
+        # Host validation can fail before Flask creates a URL adapter. The
+        # shared page calls url_for, so this response must avoid templates.
+        return 'Bad Request: this host is not allowed.\n', 400, {'Content-Type': 'text/plain; charset=utf-8'}
 
     for status, message in {
         400: 'The request could not be understood. Check the information and try again.',

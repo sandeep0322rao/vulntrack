@@ -27,6 +27,8 @@ RAILWAY_RUN_UID=0 lets startup correct the root-owned mounted directory; the lau
 
 5. In Settings, keep one replica, disable Serverless/App Sleeping, and allow enough memory for Python plus a Java scanner with a 512 MB heap. Start with a 2 GB service memory ceiling and observe actual usage during scans. Trial/account restrictions can constrain memory or outbound connections; check your current Railway plan before running the scanner. Hosting is usage billed, even though ZAP is free software.
 6. Generate a Railway domain in Networking, target port 5000. The launcher automatically allows RAILWAY_PUBLIC_DOMAIN plus the Railway healthcheck hostname. For a custom domain, set TRUSTED_HOSTS to the exact allowed hostnames, comma separated, including **healthcheck.railway.app**. Never include https:// or a path.
+
+If TRUSTED_HOSTS already contains the local example (localhost,127.0.0.1), replace it in Railway Variables with your actual public hostname plus healthcheck.railway.app and redeploy. An explicitly configured list takes precedence over domain discovery. For example: TRUSTED_HOSTS=your-service.up.railway.app,healthcheck.railway.app. A log entry saying the host is not trusted identifies this configuration problem. Untrusted hosts return a plain 400 response without rendering templates or echoing the supplied hostname.
 7. Deploy/redeploy. The configured healthcheck is **/login**. Wait until the build and deployment are healthy, then create the first administrator using the CLI below. No public registration or automatic demo account is enabled.
 
 ## Option B Upload this local folder with the CLI
