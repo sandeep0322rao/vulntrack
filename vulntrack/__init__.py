@@ -48,6 +48,7 @@ def create_app(test_config=None):
         SESSION_COOKIE_SECURE=os.environ.get('COOKIE_SECURE') == '1',
         PERMANENT_SESSION_LIFETIME=timedelta(minutes=60),
         WTF_CSRF_TIME_LIMIT=7200,
+        WTF_CSRF_SSL_STRICT=False,
         TRUSTED_HOSTS=[host.strip() for host in
                        (os.environ.get('TRUSTED_HOSTS') or 'localhost,127.0.0.1,[::1],.railway.app,.up.railway.app,healthcheck.railway.app').split(',')
                        if host.strip()],
@@ -108,7 +109,7 @@ def create_app(test_config=None):
         )
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['X-Frame-Options'] = 'DENY'
-        response.headers['Referrer-Policy'] = 'no-referrer'
+        response.headers['Referrer-Policy'] = 'same-origin'
         response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
         if request.is_secure:
             response.headers['Strict-Transport-Security'] = 'max-age=31536000'
