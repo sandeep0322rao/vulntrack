@@ -37,20 +37,20 @@ def email_address(form, field):
 
 
 class LoginForm(FlaskForm):
-    email = StringField('Email address', validators=[DataRequired(), Length(max=254)])
+    email = StringField('Username or email', validators=[DataRequired(), Length(max=254)])
     password = PasswordField('Password', validators=[DataRequired(), Length(max=128)])
 
 
 class UserForm(FlaskForm):
     name = StringField('Full name', validators=[DataRequired(), Length(max=100)])
     email = StringField('Email address', validators=[DataRequired(), Length(max=254), email_address])
-    password = PasswordField('Initial password', validators=[DataRequired(), Length(min=12, max=128)])
+    password = PasswordField('Initial password', validators=[DataRequired(), Length(min=6, max=128)])
     role = SelectField('Role', choices=[('tester', 'Security tester'), ('admin', 'Administrator')])
 
 
 class PasswordForm(FlaskForm):
     current_password = PasswordField('Current password', validators=[DataRequired(), Length(max=128)])
-    password = PasswordField('New password', validators=[DataRequired(), Length(min=12, max=128)])
+    password = PasswordField('New password', validators=[DataRequired(), Length(min=6, max=128)])
     confirm = PasswordField('Confirm new password', validators=[DataRequired(), EqualTo('password')])
 
 

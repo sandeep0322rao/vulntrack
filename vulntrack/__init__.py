@@ -49,7 +49,7 @@ def create_app(test_config=None):
         PERMANENT_SESSION_LIFETIME=timedelta(minutes=60),
         WTF_CSRF_TIME_LIMIT=7200,
         TRUSTED_HOSTS=[host.strip() for host in
-                       (os.environ.get('TRUSTED_HOSTS') or 'localhost,127.0.0.1,[::1]').split(',')
+                       (os.environ.get('TRUSTED_HOSTS') or 'localhost,127.0.0.1,[::1],.railway.app,.up.railway.app,healthcheck.railway.app').split(',')
                        if host.strip()],
         SCAN_MAX_PAGES=5,
         SCAN_MAX_SECONDS=120,
@@ -160,8 +160,8 @@ def create_app(test_config=None):
             email_address(None, SimpleNamespace(data=email))
         except ValidationError as exc:
             raise click.ClickException(str(exc))
-        if not 12 <= len(password) <= 128 or not 1 <= len(name.strip()) <= 100:
-            raise click.ClickException('Use a name up to 100 characters and a password of 12–128 characters.')
+        if not 6 <= len(password) <= 128 or not 1 <= len(name.strip()) <= 100:
+            raise click.ClickException('Use a name up to 100 characters and a password of 6–128 characters.')
         email = email.strip().lower()
         if db.session.scalar(db.select(User).where(User.email == email)):
             raise click.ClickException('That email address already exists.')
@@ -178,8 +178,8 @@ def create_app(test_config=None):
         """Operator-assisted account recovery; invalidates existing sessions."""
         from .models import AuditLog
         user = db.session.scalar(db.select(User).where(User.email == email.strip().lower()))
-        if not user or not 12 <= len(password) <= 128:
-            raise click.ClickException('Account not found or password outside 12–128 characters.')
+        if not user or not 6 <= len(password) <= 128:
+            raise click.ClickException('Account not found or password outside 6–128 characters.')
         user.set_password(password)
         db.session.add(AuditLog(actor_id=user.id, action='operator_password_reset', details='Recovered through local CLI'))
         db.session.commit()

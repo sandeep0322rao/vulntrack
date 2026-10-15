@@ -100,6 +100,28 @@ def configure_environment():
 def main():
     port = configure_environment()
     subprocess.run([sys.executable, '-m', 'flask', '--app', 'app', 'init-db'], check=True)
+    admin_email = os.environ.get('ADMIN_EMAIL', 'admin@vulntrack.com').strip().lower()
+    admin_password = os.environ.get('ADMIN_PASSWORD', '123456')
+    admin_name = os.environ.get('ADMIN_NAME', 'admin')
+    if admin_email and len(admin_password) >= 6:
+        try:
+            res = subprocess.run([
+                sys.executable, '-m', 'flask', '--app', 'app', 'create-admin',
+                '--email', admin_email,
+                '--name', admin_name,
+                '--password', admin_password,
+            ], capture_output=True, text=True)
+            if res.returncode == 0:
+                print(f'Administrator created: {admin_name} / {admin_email} (password: {admin_password})', flush=True)
+            else:
+                subprocess.run([
+                    sys.executable, '-m', 'flask', '--app', 'app', 'reset-password',
+                    '--email', admin_email,
+                    '--password', admin_password,
+                ], capture_output=True, text=True)
+                print(f'Administrator password synchronized for {admin_email}', flush=True)
+        except Exception:
+            pass
     children = []
     stopping = False
 

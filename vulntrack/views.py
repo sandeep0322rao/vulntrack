@@ -90,13 +90,21 @@ def login():
         if attempts >= 10:
             abort(429)
         db.session.execute(db.delete(LoginAttempt).where(LoginAttempt.created_at < cutoff))
-        user = db.session.scalar(db.select(User).where(User.email == form.email.data.strip().lower()))
+        ident = form.email.data.strip().lower()
+        user = db.session.scalar(
+            db.select(User).where(
+                (User.email == ident) |
+                (User.email == f'{ident}@vulntrack.com') |
+                (User.email == f'{ident}@vulntrack.local') |
+                (db.func.lower(User.name) == ident)
+            )
+        )
         valid = check_password_hash(user.password_hash if user else DUMMY_HASH, form.password.data)
         if not user or not valid or not user.enabled:
             db.session.add(LoginAttempt(ip_key=ip_key))
             db.session.add(AuditLog(action='login_failed', details='Sign-in rejected'))
             db.session.commit()
-            flash('Email or password is incorrect, or the account is disabled.', 'danger')
+            flash('Email/username or password is incorrect, or the account is disabled.', 'danger')
         else:
             session.clear()
             login_user(user, remember=False)
@@ -815,8 +823,10 @@ def assessment_delete(identifier):
     if form.validate_on_submit():
         active = db.session.scalar(db.select(ScanJob).where(ScanJob.assessment_id == assessment.id, ScanJob.status.in_(['queued', 'running'])))
         linked = db.session.scalar(db.select(Assessment).where(Assessment.baseline_id == assessment.id))
-        if form.confirmation.data != assessment.title or not current_user.check_password(form.current_password.data):
-            flash('The title or current password did not match. Nothing was deleted.', 'danger')
+        conf = (form.confirmation.data or '').strip()
+        confirmed = (conf == assessment.title or conf.upper() == 'DELETE')
+        if not confirmed or not current_user.check_password(form.current_password.data):
+            flash('The title/confirmation or current password did not match. Nothing was deleted.', 'danger')
         elif active or linked:
             flash('Finish or cancel active scans and remove linked retests before deleting this assessment.', 'warning')
         else:
