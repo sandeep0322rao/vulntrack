@@ -59,27 +59,22 @@ def configure_environment():
         raise RuntimeError('PORT must be between 1024 and 65535 (or 80).')
     os.environ.setdefault('DATABASE_URL', 'sqlite:////app/instance/vulntrack.db')
     os.environ.setdefault('COOKIE_SECURE', '1')
-    if not os.environ.get('TRUSTED_HOSTS'):
-        hosts = [
-            'healthcheck.railway.app',
-            '.railway.app',
-            '.up.railway.app',
-            'localhost',
-            '127.0.0.1',
-            '[::1]',
-        ]
-        if os.environ.get('RAILWAY_PUBLIC_DOMAIN'):
-            hosts.insert(0, os.environ['RAILWAY_PUBLIC_DOMAIN'])
-        if os.environ.get('RAILWAY_STATIC_URL'):
-            hosts.insert(0, os.environ['RAILWAY_STATIC_URL'])
-        if os.environ.get('RAILWAY_TCP_PROXY_DOMAIN'):
-            hosts.insert(0, os.environ['RAILWAY_TCP_PROXY_DOMAIN'])
-        os.environ['TRUSTED_HOSTS'] = ','.join(dict.fromkeys(h.strip() for h in hosts if h.strip()))
-    else:
-        existing = [h.strip() for h in os.environ['TRUSTED_HOSTS'].split(',') if h.strip()]
-        if 'healthcheck.railway.app' not in existing:
-            existing.append('healthcheck.railway.app')
-        os.environ['TRUSTED_HOSTS'] = ','.join(existing)
+    hosts = [h.strip() for h in os.environ.get('TRUSTED_HOSTS', '').split(',') if h.strip()]
+    for default_host in (
+        'healthcheck.railway.app',
+        '.railway.app',
+        '.up.railway.app',
+        'localhost',
+        '127.0.0.1',
+        '[::1]',
+    ):
+        if default_host not in hosts:
+            hosts.append(default_host)
+    for env_domain in ('RAILWAY_PUBLIC_DOMAIN', 'RAILWAY_STATIC_URL', 'RAILWAY_TCP_PROXY_DOMAIN'):
+        val = os.environ.get(env_domain)
+        if val and val.strip() and val.strip() not in hosts:
+            hosts.insert(0, val.strip())
+    os.environ['TRUSTED_HOSTS'] = ','.join(dict.fromkeys(hosts))
 
     instance.mkdir(parents=True, exist_ok=True)
     # Railway volumes mount as root. Change only the app directory and its DB
@@ -119,7 +114,7 @@ def main():
             [sys.executable, '-m', 'flask', '--app', 'app', 'worker'],
             [sys.executable, '-m', 'waitress', f'--listen=0.0.0.0:{port}', '--threads=4',
              '--trusted-proxy=*', '--trusted-proxy-count=1',
-             '--trusted-proxy-headers=x-forwarded-for x-forwarded-proto', 'app:app'],
+             '--trusted-proxy-headers=x-forwarded-for x-forwarded-proto x-forwarded-host x-forwarded-port', 'app:app'],
         ]
         for command in commands:
             children.append(subprocess.Popen(command, start_new_session=True))
