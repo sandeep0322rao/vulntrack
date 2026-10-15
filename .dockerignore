@@ -1,0 +1,10 @@
+*
+!Dockerfile
+!requirements.lock.txt
+!app.py
+!vulntrack/
+!vulntrack/**
+!deploy/
+!deploy/railway_start.py
+**/__pycache__/
+**/*.pyc

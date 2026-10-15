@@ -1,0 +1,32 @@
+services:
+  web:
+    environment:
+      COOKIE_SECURE: '1'
+      TRUSTED_HOSTS: ${DOMAIN:?Set DOMAIN to your public hostname}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; r=urllib.request.Request('http://127.0.0.1:5000/login', headers={'Host': '${DOMAIN:?Set DOMAIN}'}); urllib.request.urlopen(r, timeout=5)"]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      web:
+        condition: service_healthy
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN to your public hostname}
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+volumes:
+  caddy_data:
+  caddy_config:

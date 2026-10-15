@@ -1,0 +1,13 @@
+.git/
+.venv/
+.tools/
+instance/
+test-results/
+outputs/
+backups/
+.pytest_cache/
+**/__pycache__/
+**/*.pyc
+*.docx
+.env
+.env.docker

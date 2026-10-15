@@ -1,0 +1,4 @@
+<nav class="workflow-steps" aria-label="Assessment workflow">
+{% for step, label, href in [(1,'Scope',url_for('web.assessment_detail', identifier=assessment.id)),(2,'Add findings',url_for('web.intake', identifier=assessment.id)),(3,'Review issues',url_for('web.findings', assessment_id=assessment.id)),(4,'Track fixes',url_for('web.remediation', assessment_id=assessment.id)),(5,'Reports',url_for('web.reports', assessment_id=assessment.id))] %}
+<a class="workflow-step {{ 'current' if active_step == step }}" href="{{ href }}" {% if active_step == step %}aria-current="step"{% endif %}><span>{{ step }}</span><strong>{{ label }}</strong></a>
+{% endfor %}</nav>

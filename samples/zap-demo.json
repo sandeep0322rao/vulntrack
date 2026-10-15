@@ -1,0 +1,23 @@
+{
+  "@version": "demo",
+  "site": [{
+    "@name": "https://portal.example.com",
+    "alerts": [{
+      "alert": "Content Security Policy header missing",
+      "riskcode": "1",
+      "confidence": "2",
+      "cweid": "693",
+      "desc": "<p>Synthetic example: a defense-in-depth header was absent.</p>",
+      "solution": "<p>Design and test an appropriate Content Security Policy.</p>",
+      "instances": [{"uri": "https://portal.example.com/", "method": "GET", "evidence": "SYNTHETIC EXAMPLE ONLY"}]
+    }, {
+      "alert": "Cookie without Secure flag",
+      "riskcode": "1",
+      "confidence": "2",
+      "cweid": "614",
+      "desc": "Synthetic cookie attribute observation.",
+      "solution": "Apply the Secure attribute to sensitive cookies.",
+      "instances": [{"uri": "https://portal.example.com/login", "method": "GET", "evidence": "SYNTHETIC EXAMPLE ONLY. No cookie value stored."}]
+    }]
+  }]
+}

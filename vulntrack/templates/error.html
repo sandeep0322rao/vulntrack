@@ -1,0 +1,2 @@
+{% extends 'base.html' %}{% from 'macros.html' import icon with context %}{% block title %}{{ code }}{% endblock %}
+{% block content %}<section class="panel error-page"><span class="eyebrow">REQUEST {{ code }}</span><h1>{{ 'Page unavailable' if code == 404 else 'Unable to complete this request' }}</h1><p>{{ message }}</p><a class="btn btn-primary" href="{{ url_for('web.dashboard') if current_user.is_authenticated else url_for('web.login') }}">{{ icon('arrow') }} {{ 'Back to overview' if current_user.is_authenticated else 'Back to sign in' }}</a></section>{% endblock %}

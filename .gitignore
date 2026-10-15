@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+.pytest_cache/
+instance/
+.env
+*.pyc
+*.log
+test-results/
+.tools/
+.env.docker
+backups/
+outputs/

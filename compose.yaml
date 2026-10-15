@@ -1,0 +1,60 @@
+name: vulntrack
+
+x-app: &app
+  image: vulntrack:local
+  build: .
+  init: true
+  environment:
+    SECRET_KEY: ${SECRET_KEY:?Set a generated SECRET_KEY in .env.docker}
+    COOKIE_SECURE: ${COOKIE_SECURE:-0}
+    TRUSTED_HOSTS: ${TRUSTED_HOSTS:-localhost,127.0.0.1}
+    DATABASE_URL: sqlite:////app/instance/vulntrack.db
+  volumes:
+    - app_data:/app/instance
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  pids_limit: 256
+  stop_grace_period: 30s
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: '3'
+
+services:
+  init-db:
+    <<: *app
+    command: [python, -m, flask, --app, app, init-db]
+    restart: 'no'
+    mem_limit: 512m
+
+  web:
+    <<: *app
+    command: [python, -m, waitress, '--listen=0.0.0.0:5000', '--threads=4', '--trusted-proxy=*', '--trusted-proxy-count=1', '--trusted-proxy-headers=x-forwarded-for x-forwarded-proto', 'app:app']
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+    ports:
+      - 127.0.0.1:8000:5000
+    restart: unless-stopped
+    mem_limit: 768m
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; r=urllib.request.Request('http://127.0.0.1:5000/login', headers={'Host': '${HEALTHCHECK_HOST:-localhost}'}); urllib.request.urlopen(r, timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  worker:
+    <<: *app
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+    command: [python, -m, flask, --app, app, worker]
+    restart: unless-stopped
+    mem_limit: 1536m
+
+volumes:
+  app_data:
