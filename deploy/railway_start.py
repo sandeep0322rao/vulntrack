@@ -10,7 +10,7 @@ import time
 def configure_environment():
     instance = Path('/app/instance')
     if os.environ.get('RAILWAY_ENVIRONMENT_ID'):
-        if os.environ.get('RAILWAY_VOLUME_MOUNT_PATH') != str(instance):
+        if os.environ.get('RAILWAY_VOLUME_MOUNT_PATH') != instance.as_posix():
             raise RuntimeError('Attach a Railway volume at /app/instance before deploying.')
     if len(os.environ.get('SECRET_KEY', '')) < 32:
         raise RuntimeError('Set a stable, randomly generated SECRET_KEY of at least 32 characters.')
